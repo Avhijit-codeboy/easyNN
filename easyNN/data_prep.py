@@ -14,9 +14,9 @@ def data_prep(filename,drop_features=None,train_percent=60,test_percent=20,val_p
 	if drop_features is not None:
 		sdss_df.drop(drop_features,axis=1)
 
-	train_count = (train_percent/100)*sdss_df.shape[0]
-	test_count = (test_percent/100)*sdss_df.shape[0]
-	val_count = (val_percent/100)*sdss_df.shape[0]
+	train_count = int((train_percent/100)*sdss_df.shape[0])
+	test_count = int((test_percent/100)*sdss_df.shape[0])
+	val_count = int((val_percent/100)*sdss_df.shape[0])
 
 	#train,validation and test split
 	train_df = sdss_df.iloc[:train_count]
@@ -49,7 +49,7 @@ def data_prep(filename,drop_features=None,train_percent=60,test_percent=20,val_p
 		dfs = [X_train, X_validation, X_test]
 		for i in range(len(dfs)):
 			df = dfs[i]
-			tranform_data = pca.fit_transform(df[pca_data])
+			tranform_data = pc_a.fit_transform(df[pca_data])
 			df = pd.concat((df, pd.DataFrame(tranform_data)), axis=1)
 			df.rename({0: 'PCA1', 1: 'PCA2', 2: 'PCA3'}, axis=1, inplace=True)
 			df.drop(pca_data, axis=1, inplace=True)

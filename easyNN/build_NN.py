@@ -17,11 +17,11 @@ def build_NN(train,test,val,train_label,test_label,val_label,hidden_layers=5,hid
 		dnn.add(Dense(hidden_units[i], activation=activations[i]))
 		ans = input("Do you want to add Dropout?(Y/N)")
 		if ans=='Y':
-			dropout_val = input("Please input dropout value")
+			dropout_val = float(input("Please input dropout value"))
 			dnn.add(Dropout(dropout_val))
 	dnn.add(Dense(num_output_classes, activation='softmax', name='output'))
 	dnn.compile(loss=loss, optimizer=optimizer,metrics=metrics)
-	history = dnn.fit(train train_label, epochs=epochs, batch_size=batch_size,validation_data=(val, val_label))
+	history = dnn.fit(train, train_label, epochs=epochs, batch_size=batch_size,validation_data=(val, val_label))
 
 	if graphs:
 		# plot model loss while training
@@ -44,21 +44,22 @@ def build_NN(train,test,val,train_label,test_label,val_label,hidden_layers=5,hid
 		plt.legend()
 		plt.show()
 
-		preds = pd.DataFrame(dnn.predict(X_validation))
+		preds = pd.DataFrame(dnn.predict(val))
 		preds = preds.idxmax(axis=1)
-		y_validation = y_validation.dot([0,1,2])
-		model_acc = (preds == y_validation).sum().astype(float) / len(preds) * 100
+		val_label = val_label.dot([0,1,2])
+		model_acc = (preds == val_label).sum().astype(float) / len(preds) * 100
 
 		print('Deep Neural Network')
 		print('Validation Accuracy: %3.5f' % (model_acc))
 
-		preds_test = pd.DataFrame(dnn.predict(X_test))
+		preds_test = pd.DataFrame(dnn.predict(test))
 		preds_test = preds_test.idxmax(axis=1)
-		y_test = y_test.dot([0,1,2])
-		model_acc = (preds_test == y_test).sum().astype(float) / len(preds_test) * 100
+		test_label = test_label.dot([0,1,2])
+		model_acc = (preds_test == test_label).sum().astype(float) / len(preds_test) * 100
 		print('Deep Neural Network')
 		print('Test Accuracy: %3.5f' % (model_acc))
 		# plot confusion matrix
+		"""
 		labels = np.unique(sdss_df['class'])
 		ax = plt.subplot(1, 1, 1)
 		ax.set_aspect(1)
@@ -69,3 +70,4 @@ def build_NN(train,test,val,train_label,test_label,val_label,hidden_layers=5,hid
 		plt.ylabel('Predicted values')
 		plt.title('Deep Neural Network')
 		plt.show()
+		"""
