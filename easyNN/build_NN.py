@@ -1,21 +1,73 @@
-import pandas as pd
-import numpy as np
-def layers(input_file,no_of_units_in_each_hidden_layer,output_units):
-	df = pd.read_csv(input_file) #currently only csv file supported
-	input_neurons = df.shape[0] # number of input units
-	layer_list = [input_neurons] # list of neuron information for different layer includinh input and output layers
+# Copyright © Avhijit Nair and Ashutosh Singh
+from sklearn.metrics import confusion_matrix
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.metrics import categorical_crossentropy, categorical_accuracy
 
-	for i in no_of_units_in_each_hidden_layer:
-		layer_list.append(i)
-	layer_list.append(output_units)
+def build_NN(train,test,val,train_label,test_label,val_label,hidden_layers=5,hidden_units=[9,9,6,6,6],
+	activations=['relu','relu','relu','relu','relu'],optimizer='adam',loss='categorical_crossentropy',
+	metrics=['categorical_accuracy'],epochs=20,batch_size=20,graphs=False):
+	# create a deep neural network model
+	num_features = train.shape[1]
+	num_output_classes = train_label.shape[1]
+	dnn = Sequential()
+	dnn.add(Dense(9, input_dim=num_features, activation='relu'))
+	dnn.add(Dropout(0.1))
+	for i in range(1,hidden_layers):
+		dnn.add(Dense(hidden_units[i], activation=activations[i]))
+		ans = input("Do you want to add Dropout?(Y/N)")
+		if ans=='Y':
+			dropout_val = float(input("Please input dropout value"))
+			dnn.add(Dropout(dropout_val))
+	dnn.add(Dense(num_output_classes, activation='softmax', name='output'))
+	dnn.compile(loss=loss, optimizer=optimizer,metrics=metrics)
+	history = dnn.fit(train, train_label, epochs=epochs, batch_size=batch_size,validation_data=(val, val_label))
 
-	weight_matrix = [] #list of weight matrices
+	if graphs:
+		# plot model loss while training
+		epochs_arr = np.arange(1, epochs + 1, 1)
+		my_history = history.history
+		line1 = plt.plot(epochs_arr, my_history['loss'], 'r-', label='training loss')
+		line2 = plt.plot(epochs_arr, my_history['val_loss'], 'b-', label='validation loss')
+		plt.xlabel('Epochs')
+		plt.ylabel('Loss')
+		plt.title('Model loss')
+		plt.legend()
+		plt.show()
 
-	for i in range(len(layer_list)-1):
-		a = np.zeros((layer_list[i+1],layer_list[i])) # dimensions of weight matrices
-		weight_matrix.append(a) # appending each weight matrix to a single list
+		# plot model accuracy while training
+		line1 = plt.plot(epochs_arr, my_history['categorical_accuracy'], 'r-', label='training accuracy')
+		line2 = plt.plot(epochs_arr, my_history['val_categorical_accuracy'], 'b-', label='validation accuracy')
+		plt.xlabel('Epochs')
+		plt.ylabel('Accuracy')
+		plt.title('Model accuracy')
+		plt.legend()
+		plt.show()
 
-	return weight_matrix
+		preds = pd.DataFrame(dnn.predict(val))
+		preds = preds.idxmax(axis=1)
+		val_label = val_label.dot([0,1,2])
+		model_acc = (preds == val_label).sum().astype(float) / len(preds) * 100
 
-#ans = layers("sloan_sky_survey.csv",[4,4],2)
-#print(ans[0].shape," ",ans[1].shape," ",ans[2].shape)
+		print('Deep Neural Network')
+		print('Validation Accuracy: %3.5f' % (model_acc))
+
+		preds_test = pd.DataFrame(dnn.predict(test))
+		preds_test = preds_test.idxmax(axis=1)
+		test_label = test_label.dot([0,1,2])
+		model_acc = (preds_test == test_label).sum().astype(float) / len(preds_test) * 100
+		print('Deep Neural Network')
+		print('Test Accuracy: %3.5f' % (model_acc))
+		# plot confusion matrix
+		"""
+		labels = np.unique(sdss_df['class'])
+		ax = plt.subplot(1, 1, 1)
+		ax.set_aspect(1)
+		plt.subplots_adjust(wspace = 0.3)
+		sns.heatmap(confusion_matrix(y_test, preds_test), annot=True,fmt='d', 
+			xticklabels = labels, yticklabels = labels,cbar_kws={'orientation': 'horizontal'})
+		plt.xlabel('Actual values')
+		plt.ylabel('Predicted values')
+		plt.title('Deep Neural Network')
+		plt.show()
+		"""
